@@ -1,1 +1,10 @@
-/target/
+target
+
+*.class
+
+.settings
+.classpath
+.project
+.manager
+.scala_dependencies
+.cache
