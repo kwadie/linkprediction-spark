@@ -7,10 +7,14 @@ class FeatureList (xv:Long, xu:Long) extends Serializable {
   var u:Long = xu
   var v_degree:Int = 0
   var u_degree:Int = 0
-  var commonFriends:Int =0
+  var commonFriends_Out:Int =0
+  var totalFriends_out:Int =0
+  var prefAttachment:Int = v_degree * u_degree
   
   override def toString = 
-  f"U: $u%s, V: $v%s, u_dg: $u_degree%s, v_dg: $v_degree%s, cf: $commonFriends%s"
+  f"V: $v%s, U: $u%s, v_dg: $v_degree%s, u_dg: $u_degree%s, cf_out: $commonFriends_Out%s, prefA: $getPrefAttachment%s, tf_out: $totalFriends_out%s "
+  
+  def getPrefAttachment:Int = v_degree * u_degree
   
   def setUdegree(ud:Int):FeatureList = {
     u_degree = ud
@@ -22,8 +26,13 @@ class FeatureList (xv:Long, xu:Long) extends Serializable {
     return this
   }
   
-  def setCommonFriends(cf:Int):FeatureList = {
-    commonFriends = cf
+  def setCommonFriendsOut(cf:Int): FeatureList = {
+    commonFriends_Out = cf
+    return this
+  }
+  
+    def setTotalFriendsOut(tf:Int): FeatureList = {
+    totalFriends_out = tf
     return this
   }
   
