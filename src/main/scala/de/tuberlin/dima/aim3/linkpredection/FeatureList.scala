@@ -1,7 +1,10 @@
 package de.tuberlin.dima.aim3.linkpredection
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder
+import org.apache.commons.lang3.builder.ToStringStyle
+
 @SerialVersionUID(114L)
-class FeatureList (xv:Long, xu:Long) extends Serializable {
+class FeatureList (xv:Long, xu:Long, xlabel: String) extends Serializable {
   
   var v:Long = xv
   var u:Long = xu
@@ -10,10 +13,13 @@ class FeatureList (xv:Long, xu:Long) extends Serializable {
   var commonFriends_Out:Int =0
   var totalFriends_out:Int =0
   var prefAttachment:Int = v_degree * u_degree
+  var label: String = xlabel
+
+
+  override def toString = ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE)
   
-  override def toString = 
-  f"V: $v%s, U: $u%s, v_dg: $v_degree%s, u_dg: $u_degree%s, cf_out: $commonFriends_Out%s, prefA: $getPrefAttachment%s, tf_out: $totalFriends_out%s "
-  
+  def asCsv = f"$v,$u,$v_degree,$u_degree,$commonFriends_Out,$totalFriends_out,$prefAttachment,$label"
+
   def getPrefAttachment:Int = v_degree * u_degree
   
   def setUdegree(ud:Int):FeatureList = {

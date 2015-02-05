@@ -8,7 +8,7 @@ import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 import java.io.File
 
-object Sampler {
+object SamplerSandbox {
 
   val SEED = 0x3133F
 
