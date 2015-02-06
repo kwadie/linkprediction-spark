@@ -7,6 +7,7 @@ import org.apache.spark._
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 import java.io.File
+import scala.util.Random
 
 object Sampler {
 
@@ -16,6 +17,7 @@ object Sampler {
   val NEG = 'N'
 
   def main(args: Array[String]) {
+
     val inputPath = "c:/tmp/data/slashdot0902/Slashdot0902.txt"
     val conf = new SparkConf().setAppName("Simple Application").setMaster("local[*]")
     val sc = new SparkContext(conf)
@@ -31,30 +33,42 @@ object Sampler {
       epred = e => e.srcId != e.dstId,
       vpred = (id, attr) => verticesBroadcast.value.contains(id.toInt))
 
-
     val output1 = new File("C:/tmp/spark/out/edges.txt")
     val graphArray = subgraph.edges.toArray.map(t => t.srcId + "\t" + t.dstId)
     printToFile(output1) { p => graphArray.foreach(p.println) }
 
     val dstEdges = subgraph.edges.map(e => (e.dstId, e))
     val srcEdges = subgraph.edges.map(e => (e.srcId, e))
-    val hardNetagives = dstEdges.join(srcEdges)
+    val hardNegatives = dstEdges.join(srcEdges)
       .filter { case (_, (e1, e2)) => e1.srcId != e2.dstId }
       .map { case (_, (e1, e2)) => ((e1.srcId, e2.dstId), NEG) }
 
-    val edgeIds = subgraph.edges.map { case Edge(v1, v2, w) => (v1, v2) }
-    val vertices = subgraph.vertices.sample(false, 0.1, SEED).map(v => v._1)
-    val easyNegatives = vertices.cartesian(vertices)
-      //.subtract(edgeIds) 
-      // takes too long, we can just assume that it's highly unlikely to get a POS here  
-      .sample(false, 0.005, SEED)
-      .map { case (v1, v2) => ((v1, v2), NEG) }
+    val srcIdEdges = subgraph.edges.map { e => e.srcId }
+    val dstIdEdges = subgraph.edges.map { e => e.dstId }
+    
+    val vertices = srcIdEdges.union(dstIdEdges).toArray
 
+	val len = vertices.length
+    val rand = new Random(SEED)
+
+    val easyNegatives1 = 
+      Seq.fill(5500)(rand.nextInt(len), rand.nextInt(len))
+    	 .filter { case (idx1, idx2) => idx1 != idx2 }
+         .map { case (idx1, idx2) => (vertices(idx1), vertices(idx2), NEG) }
+    
+    val len2 = selectedVertices.length
+    val easyNegatives2 = 
+      Seq.fill(3000)(rand.nextInt(len2), rand.nextInt(len2))
+    	 .filter { case (idx1, idx2) => idx1 != idx2 }
+         .map { case (idx1, idx2) => (selectedVertices(idx1), selectedVertices(idx2), NEG) }
+    
+    
     val positive = subgraph.edges.sample(true, 0.20, SEED)
       .map { case Edge(v1, v2, w) => ((v1, v2), POS) }
 
-    val labels = hardNetagives.take(5000)
-      .union(easyNegatives.take(5000))
+    val labels = easyNegatives1.take(3000)
+      .union(easyNegatives2.take(2000))
+      .union(hardNegatives.take(5000))
       .union(positive.take(10000))
 
     val output2 = new File("C:/tmp/spark/out/sample.txt")
