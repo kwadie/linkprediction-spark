@@ -3,6 +3,9 @@ package de.tuberlin.dima.aim3.linkpredection
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 import org.apache.commons.lang3.ObjectUtils
+import org.apache.spark.util.Vector
+import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.mllib.regression.LabeledPoint
 
 @SerialVersionUID(114L)
 class FeatureList(xu: Long, xv: Long, xlabel: String) extends Serializable with Comparable[FeatureList] {
@@ -39,6 +42,7 @@ class FeatureList(xu: Long, xv: Long, xlabel: String) extends Serializable with 
                   "cf_in,cf_out,tf_in,tf_out,fm,pa,jcin,jcout,label"
   
 
+
   def asCsv = 
               f"$u,$v,$u_degree,$u_in,$u_out,$u_bi,$calcUinDensity,$calcUoutDensity,$calcUbiDensity,"+
               f"$v_degree,$v_in,$v_out,$v_bi,$calcVinDensity,$calcVoutDensity,$calcVbiDensity,"+
@@ -56,6 +60,19 @@ class FeatureList(xu: Long, xv: Long, xlabel: String) extends Serializable with 
   def calcUoutDensity:Double =   if(u_degree != 0)   u_out.toDouble  / u_degree.toDouble  else 0.0D
   def calcUbiDensity:Double =   if(u_degree != 0)   u_bi.toDouble  / u_degree.toDouble  else 0.0D
 
+  def toFeaturesArray = Array(v, u, v_degree, u_degree, commonFriends_Out, totalFriends_out, getPrefAttachment)
+
+  def toCsv = toFeaturesArray.mkString(",") + "," + label
+
+  def toVector = Vectors.dense(toFeaturesArray.map(_.toDouble))
+  
+  def toLabeledPoint = LabeledPoint(numericalLabel, toVector)
+  
+  def getPrefAttachment: Int = v_degree * u_degree
+
+
+  def numericalLabel = if (label == "Y") 1.0 else 0.0
+  
   def setUdegree(ud: Int): FeatureList = {
     u_degree = ud
     return this
@@ -140,6 +157,7 @@ class FeatureList(xu: Long, xv: Long, xlabel: String) extends Serializable with 
 }
 
 
+
 class VertexDegrees(d:Int, in:Int, out:Int){
   
   var degree:Int = d
@@ -147,5 +165,27 @@ class VertexDegrees(d:Int, in:Int, out:Int){
   var outdegree:Int = out
   
   override def toString = ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE)
-  
 }
+
+object FeatureList {
+    def fromCsv(csv: String): FeatureList = {
+    val split = csv.split(",")
+    val it = split.iterator
+  
+    val u = it.next.toLong
+    val v = it.next.toLong
+    val v_degree = it.next.toInt
+    val u_degree = it.next.toInt
+    val commonFriends_Out = it.next.toInt
+    val totalFriends_out = it.next.toInt
+    val prefAttachment = it.next.toInt
+    val label = it.next
+
+    new FeatureList(u, v, label)
+    				.setUdegree(u_degree)
+    				.setVdegree(v_degree)
+    				.setCommonFriendsOut(commonFriends_Out)
+    				.setTotalFriendsOut(totalFriends_out)
+  } 
+}
+
