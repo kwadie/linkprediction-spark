@@ -24,30 +24,30 @@ object Classification {
     val sc = new SparkContext(conf)
 
     val featuresPath = "C:/tmp/spark/out/features.txt"
-    val features = sc.textFile(featuresPath, 4)
-      .map(FeatureList.fromCsv)
+    val csvData = sc.textFile(featuresPath, 4)
+    val features = csvData.map(FeatureList.fromCsv)
       .map(_.toLabeledPoint)
 
-    val splits = features.randomSplit(Array(0.6, 0.4), seed = SEED)
+    val splits = features.randomSplit(Array(0.6, 0.2, 0.2), seed = SEED)
 
     val training = splits(0).cache()
     val test = splits(1)
 
-    //    val model = SVMWithSGD.train(training, numIterations)
-    //    val model = NaiveBayes.train(training)
-    //    val model = LogisticRegressionWithSGD.train(training, numIterations)
+//        val model = SVMWithSGD.train(training, numIterations)
+//        val model = NaiveBayes.train(training)
+//        val model = LogisticRegressionWithSGD.train(training, numIterations)
 
-    //    val numClasses = 2
-    //	val categoricalFeaturesInfo = Map[Int, Int]()
-    //	val numTrees = 3 // Use more in practice.
-    //	val featureSubsetStrategy = "auto" // Let the algorithm choose.
-    //	val impurity = "gini"
-    //	val maxDepth = 4
-    //	val maxBins = 32
-    //    
-    //    val model = RandomForest.trainClassifier(training, 2, categoricalFeaturesInfo, numTrees, 
-    //    							featureSubsetStrategy, impurity, maxDepth, maxBins, SEED)
-
+//        val numClasses = 2
+//    	val categoricalFeaturesInfo = Map[Int, Int]()
+//    	val numTrees = 30
+//    	val featureSubsetStrategy = "auto" // Let the algorithm choose.
+//    	val impurity = "gini"
+//    	val maxDepth = 4
+//    	val maxBins = 32
+//        
+//        val model = RandomForest.trainClassifier(training, 2, categoricalFeaturesInfo, numTrees, 
+//        							featureSubsetStrategy, impurity, maxDepth, maxBins, SEED)
+//
     val boostingStrategy = BoostingStrategy.defaultParams("Classification")
     boostingStrategy.numIterations = 10
     boostingStrategy.treeStrategy.numClasses = 2
@@ -68,6 +68,21 @@ object Classification {
 
     // save ROC curve to file for visualization
     // metrics.roc.toArray
+    
+    val featuresTestPath = "C:/tmp/spark/out/features.txt"
+    val featuresTest = sc.textFile(featuresPath, 4)
+      .map(FeatureList.fromCsv)
+      .map(_.toLabeledPoint)
+
+    val scoreAndLabelsTest = featuresTest.map { point =>
+      val score = model.predict(point.features)
+      (score, point.label)
+    }
+
+    val metricsTest = new BinaryClassificationMetrics(scoreAndLabels)
+    val auROCTest = metricsTest.areaUnderROC()
+
+    println(f"AUC Test: $auROCTest")
   }
 
 }

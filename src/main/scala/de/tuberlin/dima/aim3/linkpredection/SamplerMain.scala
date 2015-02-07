@@ -11,7 +11,11 @@ import scala.util.Random
 
 object Sampler {
 
-  val SEED = 0x3133F
+  val SEED_TRAIN = 0x3133F
+  val SEED_TEST = 0xE1337
+  val Test = true
+  val SEED = if (Test) SEED_TEST else SEED_TRAIN
+  
 
   val POS = 'Y'
   val NEG = 'N'
@@ -33,7 +37,13 @@ object Sampler {
       epred = e => e.srcId != e.dstId,
       vpred = (id, attr) => verticesBroadcast.value.contains(id.toInt))
 
-    val output1 = new File("C:/tmp/spark/out/edges.txt")
+    
+    val output1 = if (Test) {
+      new File("C:/tmp/spark/out/edges-test.txt")
+    } else {
+      new File("C:/tmp/spark/out/edges.txt")
+    }
+
     val graphArray = subgraph.edges.toArray.map(t => t.srcId + "\t" + t.dstId)
     printToFile(output1) { p => graphArray.foreach(p.println) }
 
@@ -71,7 +81,12 @@ object Sampler {
       .union(hardNegatives.take(5000))
       .union(positive.take(10000))
 
-    val output2 = new File("C:/tmp/spark/out/sample.txt")
+    val output2 = if (Test) {
+      new File("C:/tmp/spark/out/sample-test.txt")
+    } else {
+      new File("C:/tmp/spark/out/sample.txt")
+    }
+
     val arrayFeatures = labels.toArray.map(t => flatProduct(t).mkString(","))
 
     printToFile(output2) { p => arrayFeatures.foreach(p.println) }
