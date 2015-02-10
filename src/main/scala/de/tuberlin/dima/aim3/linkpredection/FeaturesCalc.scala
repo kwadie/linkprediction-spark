@@ -205,10 +205,10 @@ object FeaturesCalc {
      val outpath = "D:\\tmp\\scalalinkpred\\featurecalc\\features.csv"
      new java.io.File(outpath).delete()
      
-     val solSetCSV = solSet.map { _.asCsv }.collect()
+     val solSetCSV = solSet.map { _.toCsv }.collect()
      
      val pw = new java.io.PrintWriter(new java.io.File( outpath ))
-         pw.println(new FeatureList(0,0,"").headerCsv + "")
+         pw.println(FeatureList.HeaderCsv)
          solSetCSV.foreach {pw.println(_)}
          pw.close
          

@@ -113,16 +113,25 @@ class FeatureList(xu: Long, xv: Long, xlabel: String) extends Serializable with 
     return this
   }
 
-  def toFeaturesArray = Array(u, v, u_degree, v_degree, u_in, u_out, u_bi, v_in, v_out, v_bi, 
+  def toFeaturesArray = Array(u_degree, v_degree, u_in, u_out, u_bi, v_in, v_out, v_bi, 
 		commonFriends_In, commonFriends_Out, totalFriends_in, totalFriends_out, friendsMeasure, 
 		calcUinDensity, calcUoutDensity, calcUbiDensity, calcVinDensity, calcVoutDensity, calcVbiDensity, 
 		calcPrefAttachment, calcJaccardIn, calcJaccardOut)
 
-  def toCsv = toFeaturesArray.mkString(",") + "," + label
+  def toCsv = f"$u,$v," + toFeaturesArray.mkString(",") + "," + label
   def toVector = Vectors.dense(toFeaturesArray)
   def toLabeledPoint = LabeledPoint(numericalLabel, toVector)
 
+  def toVectorSubset(indexes: List[Int]) = {
+    val array = toFeaturesArray
+    val subset = for (idx <- indexes) yield array(idx)
+    Vectors.dense(subset.toArray)
+  }
 
+  def toLabeledPointSubset(indexes: List[Int]) = {
+    LabeledPoint(numericalLabel, toVectorSubset(indexes))
+  }
+  
   override def toString = ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE)
 
   override def equals(obj: Any) = {
@@ -193,5 +202,10 @@ object FeatureList {
 		  "u_indensity,u_outdensity,u_bidensity,v_indensity,v_outdensity,v_indensity,pa," +
 		  "jcin,jcout,label"
 
+  def names(indexes: List[Int]) = {
+    val array = HeaderCsv.split(",").drop(2)
+    for (idx <- indexes) yield array(idx)
+  }
+		  
 }
 
